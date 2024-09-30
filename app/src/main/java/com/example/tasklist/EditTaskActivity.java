@@ -21,7 +21,7 @@ public class EditTaskActivity extends AppCompatActivity {
     private Button updateTaskButton;
     private ImageView backButton;
     private UserTaskDao userTaskDao;
-    private String taskId; // ID da tarefa
+    private String taskId;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

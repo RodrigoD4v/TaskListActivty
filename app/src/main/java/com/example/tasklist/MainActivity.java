@@ -126,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
                 tasks.addAll(userTasks);
                 taskAdapter.notifyDataSetChanged();
 
-                // Verifique se o usuário está logado antes de sincronizar
                 FirebaseUser user = googleSignInManager.getCurrentUser();
                 if (user != null) {
                     syncTasksWithFirestore(); //Isso sincroniza com Firestore apenas se o usuário estiver logado não retirar
@@ -145,7 +144,6 @@ public class MainActivity extends AppCompatActivity {
             AppDatabase.getInstance(this).userTaskDao().getAllTasks().observe(this, localTasks -> {
                 if (localTasks != null && !localTasks.isEmpty()) {
                     for (UserTask localTask : localTasks) {
-                        // Usando o UUID (id) como o identificador da tarefa
                         String taskIdAsString = localTask.getId();
 
                         dbFirestore.collection("tasks")
@@ -178,8 +176,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("MainActivity", "Nenhuma tarefa local encontrada.");
                 }
             });
-        } else {
-            Toast.makeText(this, "Usuário não autenticado. Sincronização falhou.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -235,7 +231,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("MainActivity", "Erro ao carregar tarefas do Firestore: ", e);
                 });
 
-        // Em seguida, adicione o listener para atualizações em tempo real
         dbFirestore.collection("tasks")
                 .document(user.getUid())
                 .collection("user_tasks")
@@ -270,14 +265,14 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == GoogleSignInManager.RC_SIGN_IN) {
             googleSignInManager.handleSignInResult(data, this::updateUI);
         } else if (requestCode == REQUEST_CODE_EDIT_TASK && resultCode == RESULT_OK) {
-            loadTasks(); // Recarregar a lista de tarefas após edição
+            loadTasks();
         }
     }
 
     private void logout() {
         googleSignInManager.signOut();
         updateUI(null);
-        loadTasks(); // Recarrega as tarefas após logout
+        loadTasks();
         Toast.makeText(this, "Logout realizado com sucesso.", Toast.LENGTH_SHORT).show();
     }
 }
