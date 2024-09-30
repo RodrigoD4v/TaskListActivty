@@ -1,0 +1,44 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/system_background_dark"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/backButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_arrow_back"
+        android:contentDescription="@string/back"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/taskTitleInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/task_title_hint"
+        android:backgroundTint="@android:color/white"
+        android:padding="12dp"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/taskDescriptionInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/task_description_hint"
+        android:backgroundTint="@android:color/white"
+        android:minHeight="64dp"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/updateTaskButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/update_task"
+        android:backgroundTint="@color/colorAccent"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

@@ -1,0 +1,94 @@
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:id="@+id/main_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:background="@android:color/system_background_dark">
+
+        <ImageView
+            android:id="@+id/hamburgerMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_hamburger_closed"
+            android:contentDescription="@string/navigation_drawer_close"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="150dp"/>
+
+        <TextView
+            android:id="@+id/welcomeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tarefas"
+            android:textSize="24sp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="100dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/welcomeText"
+            android:layout_marginTop="60dp"
+            android:layout_marginBottom="90dp"
+            android:padding="8dp" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/addTaskButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="@dimen/fab_margin"
+            android:src="@drawable/ic_add"
+            android:contentDescription="@string/add_task"
+            android:backgroundTint="@color/colorAccent" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/sideMenu"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="start"
+        android:background="@android:color/black">
+
+        <ImageView
+            android:id="@+id/closeMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_close"
+            android:contentDescription="@string/navigation_drawer_close"
+            android:layout_gravity="end"
+            android:padding="16dp"/>
+
+        <TextView
+            android:id="@+id/menu_item1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Item 1"
+            android:padding="16dp"
+            android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/loginButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Login com Google"
+            android:layout_margin="16dp"
+            android:layout_gravity="bottom"/>
+
+        <Button
+            android:id="@+id/logoutButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:layout_margin="16dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

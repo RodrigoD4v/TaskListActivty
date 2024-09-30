@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">TaskList</string>
+    <string name="default_web_client_id">824923054907-dork97nhgm8s836lhkmg44ssem5vg5ju.apps.googleusercontent.com</string>
+    <string name="task_title">Título</string>
+    <string name="task_description">Descrição</string>
+    <string name="delete_task">Excluir Tarefa</string>
+    <string name="task_title_hint">Título da tarefa</string>
+    <string name="task_description_hint">Descrição da tarefa</string>
+    <string name="update_task">Atualizar Tarefa</string>
+    <string name="save_task">Salvar Tarefa</string>
+    <string name="add_task">Adicionar Tarefa</string>
+    <string name="trash">Lixeira</string>
+    <string name="menu">Menu</string>
+    <string name="navigation_drawer_open">Abrir Menu</string>
+    <string name="navigation_drawer_close">Fechar</string>
+    <string name="back">Voltar</string>
+
+</resources>
