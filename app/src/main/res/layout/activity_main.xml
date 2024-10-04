@@ -67,14 +67,6 @@
             android:layout_gravity="end"
             android:padding="16dp"/>
 
-        <TextView
-            android:id="@+id/menu_item1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Item 1"
-            android:padding="16dp"
-            android:textColor="@android:color/white"/>
-
         <Button
             android:id="@+id/loginButton"
             android:layout_width="match_parent"

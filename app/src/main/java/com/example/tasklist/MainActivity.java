@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
 
         tasks = new ArrayList<>();
-        taskAdapter = new TaskAdapter(this, tasks); // Passando o contexto
+        taskAdapter = new TaskAdapter(this, tasks);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(taskAdapter);
@@ -90,12 +90,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.menu_item1).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawerLayout.closeDrawers();
-            }
-        });
 
         addTaskButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -191,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
             loginButton.setText("Logout");
             loadFirestoreTasks(user);
         } else {
-            welcomeText.setText("Bem-vindo ao App");
+            welcomeText.setText("Bem-vindo ao Notes SNP");
             loginButton.setText("Login com Google");
         }
     }
