@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -13,7 +12,6 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,7 +19,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private TaskAdapter taskAdapter;
     private List<UserTask> tasks;
+    private TaskDeletionManager taskDeletionManager;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -51,9 +49,11 @@ public class MainActivity extends AppCompatActivity {
         drawerLayout = findViewById(R.id.drawer_layout);
         FloatingActionButton addTaskButton = findViewById(R.id.addTaskButton);
         recyclerView = findViewById(R.id.recyclerView);
+        ImageView deleteIcon = findViewById(R.id.deleteIcon);
 
         tasks = new ArrayList<>();
         taskAdapter = new TaskAdapter(this, tasks);
+        taskDeletionManager = new TaskDeletionManager(this, tasks, taskAdapter);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(taskAdapter);
@@ -63,72 +63,59 @@ public class MainActivity extends AppCompatActivity {
 
         loadTasks();
 
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FirebaseUser currentUser = googleSignInManager.getCurrentUser();
-                if (currentUser != null) {
-                    logout();
-                } else {
-                    login();
-                }
+        loginButton.setOnClickListener(v -> {
+            FirebaseUser currentUser = googleSignInManager.getCurrentUser();
+            if (currentUser != null) {
+                logout();
+            } else {
+                login();
             }
         });
 
-        hamburgerMenu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleMenu();
-            }
-        });
+        hamburgerMenu.setOnClickListener(v -> toggleMenu());
 
         ImageView closeMenu = findViewById(R.id.closeMenu);
-        closeMenu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawerLayout.closeDrawers();
-            }
+        closeMenu.setOnClickListener(v -> drawerLayout.closeDrawers());
+
+        addTaskButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AddTaskActivity.class);
+            startActivity(intent);
         });
 
-
-        addTaskButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AddTaskActivity.class);
-                startActivity(intent);
-            }
+        taskAdapter.setOnItemClickListener(task -> {
+            Intent intent = new Intent(MainActivity.this, EditTaskActivity.class);
+            intent.putExtra("taskId", task.getId());
+            intent.putExtra("taskTitle", task.getTaskTitle());
+            intent.putExtra("taskDescription", task.getTaskDescription());
+            startActivity(intent);
         });
 
-        taskAdapter.setOnItemClickListener(new TaskAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(UserTask task) {
-                Intent intent = new Intent(MainActivity.this, EditTaskActivity.class);
-                intent.putExtra("taskId", task.getId());
-                intent.putExtra("taskTitle", task.getTaskTitle());
-                intent.putExtra("taskDescription", task.getTaskDescription());
-                startActivity(intent);
+        taskAdapter.setOnItemLongClickListener(taskDeletionManager::onTaskLongClick);
+
+        deleteIcon.setOnClickListener(v -> {
+            FirebaseUser user1 = googleSignInManager.getCurrentUser();
+            if (user1 != null) {
+                taskDeletionManager.deleteSelectedTasks();
+            } else {
+                Toast.makeText(this, "Por favor, faça login para deletar tarefas.", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void loadTasks() {
         AppDatabase db = AppDatabase.getInstance(this);
-        db.userTaskDao().getAllTasks().observe(this, new Observer<List<UserTask>>() {
-            @Override
-            public void onChanged(List<UserTask> userTasks) {
-                tasks.clear();
-                tasks.addAll(userTasks);
-                taskAdapter.notifyDataSetChanged();
+        db.userTaskDao().getAllTasks().observe(this, userTasks -> {
+            tasks.clear();
+            tasks.addAll(userTasks);
+            taskAdapter.notifyDataSetChanged();
 
-                FirebaseUser user = googleSignInManager.getCurrentUser();
-                if (user != null) {
-                    syncTasksWithFirestore(); //Isso sincroniza com Firestore apenas se o usuário estiver logado não retirar
-                    loadFirestoreTasks(user);
-                }
+            FirebaseUser user = googleSignInManager.getCurrentUser();
+            if (user != null) {
+                syncTasksWithFirestore();
+                loadFirestoreTasks(user);
             }
         });
     }
-
 
     private void syncTasksWithFirestore() {
         FirebaseUser user = googleSignInManager.getCurrentUser();
@@ -155,16 +142,12 @@ public class MainActivity extends AppCompatActivity {
                                                         AppDatabase.getInstance(this).userTaskDao().update(localTask);
                                                     });
                                                 })
-                                                .addOnFailureListener(e -> {
-                                                    Log.e("MainActivity", "Erro ao adicionar tarefa: ", e);
-                                                });
+                                                .addOnFailureListener(e -> Log.e("MainActivity", "Erro ao adicionar tarefa: ", e));
                                     } else {
                                         Log.d("MainActivity", "Tarefa já existe no Firestore: " + taskIdAsString);
                                     }
                                 })
-                                .addOnFailureListener(e -> {
-                                    Log.e("MainActivity", "Erro ao verificar tarefa no Firestore: ", e);
-                                });
+                                .addOnFailureListener(e -> Log.e("MainActivity", "Erro ao verificar tarefa no Firestore: ", e));
                     }
                 } else {
                     Log.d("MainActivity", "Nenhuma tarefa local encontrada.");
@@ -193,7 +176,6 @@ public class MainActivity extends AppCompatActivity {
     private void loadFirestoreTasks(FirebaseUser user) {
         FirebaseFirestore dbFirestore = FirebaseFirestore.getInstance();
 
-        // Primeiro, carregue as tarefas uma vez
         dbFirestore.collection("tasks")
                 .document(user.getUid())
                 .collection("user_tasks")
@@ -203,14 +185,7 @@ public class MainActivity extends AppCompatActivity {
                         for (DocumentSnapshot document : queryDocumentSnapshots) {
                             UserTask firestoreTask = document.toObject(UserTask.class);
                             if (firestoreTask != null) {
-                                // Verifica se a tarefa já está na lista pelo ID
-                                boolean exists = false;
-                                for (UserTask task : tasks) {
-                                    if (task.getId().equals(firestoreTask.getId())) {
-                                        exists = true;
-                                        break;
-                                    }
-                                }
+                                boolean exists = tasks.stream().anyMatch(task -> task.getId().equals(firestoreTask.getId()));
                                 if (!exists) {
                                     tasks.add(firestoreTask);
                                 }
@@ -221,9 +196,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("MainActivity", "Nenhuma tarefa encontrada no Firestore.");
                     }
                 })
-                .addOnFailureListener(e -> {
-                    Log.e("MainActivity", "Erro ao carregar tarefas do Firestore: ", e);
-                });
+                .addOnFailureListener(e -> Log.e("MainActivity", "Erro ao carregar tarefas do Firestore: ", e));
 
         dbFirestore.collection("tasks")
                 .document(user.getUid())
@@ -266,7 +239,11 @@ public class MainActivity extends AppCompatActivity {
     private void logout() {
         googleSignInManager.signOut();
         updateUI(null);
-        loadTasks();
-        Toast.makeText(this, "Logout realizado com sucesso.", Toast.LENGTH_SHORT).show();
+        tasks.clear();
+        taskAdapter.notifyDataSetChanged();
+    }
+
+    public GoogleSignInManager getGoogleSignInManager() {
+        return googleSignInManager;
     }
 }

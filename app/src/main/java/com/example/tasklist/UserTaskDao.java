@@ -23,7 +23,6 @@ public interface UserTaskDao {
     @Query("SELECT * FROM user_tasks WHERE task_id = :taskId")
     UserTask getTaskById(String taskId);
 
-
     @Query("DELETE FROM user_tasks WHERE task_id = :taskId")
     void deleteTask(String taskId);
 }
