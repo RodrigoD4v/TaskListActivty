@@ -35,7 +35,7 @@ public class AddTaskActivity extends AppCompatActivity {
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();  // Chama finish() para voltar à tela anterior
+                finish();
             }
         });
 

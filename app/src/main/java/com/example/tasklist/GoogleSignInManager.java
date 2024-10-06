@@ -2,12 +2,12 @@ package com.example.tasklist;
 
 import android.app.Activity;
 import android.content.Intent;
-import androidx.annotation.NonNull;
+import android.util.Log;
+
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
@@ -67,9 +67,9 @@ public class GoogleSignInManager {
 
     public void signOut() {
         firebaseAuth.signOut();
-        googleSignInClient.signOut().addOnCompleteListener(activity, new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
+        googleSignInClient.signOut().addOnCompleteListener(activity, task -> {
+            if (firebaseAuth.getCurrentUser() == null) {
+                Log.d("GoogleSignInManager", "Usuário desconectado com sucesso." );
             }
         });
     }

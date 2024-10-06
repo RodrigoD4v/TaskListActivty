@@ -2,6 +2,8 @@ package com.example.tasklist;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 import android.widget.Button;
@@ -36,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     private TaskAdapter taskAdapter;
     private List<UserTask> tasks;
     private TaskDeletionManager taskDeletionManager;
+    private boolean isUserAuthenticated = false;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,9 +63,9 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(taskAdapter);
 
         FirebaseUser user = googleSignInManager.getCurrentUser();
-        updateUI(user);
 
-        loadTasks();
+        updateUI(user);
+        loadTasks(user);
 
         loginButton.setOnClickListener(v -> {
             FirebaseUser currentUser = googleSignInManager.getCurrentUser();
@@ -73,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         hamburgerMenu.setOnClickListener(v -> toggleMenu());
-
         ImageView closeMenu = findViewById(R.id.closeMenu);
         closeMenu.setOnClickListener(v -> drawerLayout.closeDrawers());
 
@@ -102,31 +105,38 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void loadTasks() {
+    private void loadTasks(FirebaseUser user) {
         AppDatabase db = AppDatabase.getInstance(this);
         db.userTaskDao().getAllTasks().observe(this, userTasks -> {
             tasks.clear();
             tasks.addAll(userTasks);
             taskAdapter.notifyDataSetChanged();
 
-            FirebaseUser user = googleSignInManager.getCurrentUser();
             if (user != null) {
-                syncTasksWithFirestore();
                 loadFirestoreTasks(user);
+                syncTasksWithFirestore(user);
             }
         });
     }
 
-    private void syncTasksWithFirestore() {
-        FirebaseUser user = googleSignInManager.getCurrentUser();
-        if (user != null) {
-            FirebaseFirestore dbFirestore = FirebaseFirestore.getInstance();
+    private void syncTasksWithFirestore(FirebaseUser user) {
+        if (user == null) {
+            Log.w("MainActivity", "Usuário não autenticado. Sincronização não realizada.");
+            isUserAuthenticated = false;
+            return;
+        }
+        Log.d("UID de usuário", user.getUid());
+        Log.d("MainActivity", "Usuário autenticado: " + user.getUid());
+        isUserAuthenticated = true;
 
-            AppDatabase.getInstance(this).userTaskDao().getAllTasks().observe(this, localTasks -> {
-                if (localTasks != null && !localTasks.isEmpty()) {
-                    for (UserTask localTask : localTasks) {
-                        String taskIdAsString = localTask.getId();
+        FirebaseFirestore dbFirestore = FirebaseFirestore.getInstance();
+        AppDatabase.getInstance(this).userTaskDao().getAllTasks().observe(this, localTasks -> {
+            if (localTasks != null && !localTasks.isEmpty() && isUserAuthenticated) { // Verifique a autenticação
+                Handler handler = new Handler(Looper.getMainLooper());
+                for (UserTask localTask : localTasks) {
+                    String taskIdAsString = localTask.getId();
 
+                    handler.postDelayed(() -> {
                         dbFirestore.collection("tasks")
                                 .document(user.getUid())
                                 .collection("user_tasks")
@@ -144,29 +154,24 @@ public class MainActivity extends AppCompatActivity {
                                                 })
                                                 .addOnFailureListener(e -> Log.e("MainActivity", "Erro ao adicionar tarefa: ", e));
                                     } else {
-                                        Log.d("MainActivity", "Tarefa já existe no Firestore: " + taskIdAsString);
+                                        Log.d("MainActivity", "Tarefa já existe no Firestore para o usuário: " + user.getUid());
                                     }
                                 })
                                 .addOnFailureListener(e -> Log.e("MainActivity", "Erro ao verificar tarefa no Firestore: ", e));
-                    }
-                } else {
-                    Log.d("MainActivity", "Nenhuma tarefa local encontrada.");
+                    }, 1000);
                 }
-            });
-        }
+            }
+        });
     }
 
-    private void toggleMenu() {
-        if (!isMenuOpen) {
-            drawerLayout.openDrawer(Gravity.LEFT);
-        }
-    }
 
     private void updateUI(FirebaseUser user) {
         if (user != null) {
             welcomeText.setText("Bem-vindo, " + user.getDisplayName());
             loginButton.setText("Logout");
             loadFirestoreTasks(user);
+            syncTasksWithFirestore(user);
+
         } else {
             welcomeText.setText("Bem-vindo ao Notes SNP");
             loginButton.setText("Login com Google");
@@ -174,8 +179,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadFirestoreTasks(FirebaseUser user) {
-        FirebaseFirestore dbFirestore = FirebaseFirestore.getInstance();
+        if (user == null) {
+            return;
+        }
 
+        FirebaseFirestore dbFirestore = FirebaseFirestore.getInstance();
         dbFirestore.collection("tasks")
                 .document(user.getUid())
                 .collection("user_tasks")
@@ -192,8 +200,6 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         taskAdapter.notifyDataSetChanged();
-                    } else {
-                        Log.d("MainActivity", "Nenhuma tarefa encontrada no Firestore.");
                     }
                 })
                 .addOnFailureListener(e -> Log.e("MainActivity", "Erro ao carregar tarefas do Firestore: ", e));
@@ -217,7 +223,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                         taskAdapter.notifyDataSetChanged();
                     } else {
-                        Log.d("MainActivity", "Nenhuma tarefa encontrada no Firestore.");
                     }
                 });
     }
@@ -232,15 +237,22 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == GoogleSignInManager.RC_SIGN_IN) {
             googleSignInManager.handleSignInResult(data, this::updateUI);
         } else if (requestCode == REQUEST_CODE_EDIT_TASK && resultCode == RESULT_OK) {
-            loadTasks();
+            loadTasks(googleSignInManager.getCurrentUser());
         }
     }
 
     private void logout() {
         googleSignInManager.signOut();
+        isUserAuthenticated = false;
         updateUI(null);
-        tasks.clear();
-        taskAdapter.notifyDataSetChanged();
+        loadTasks(null);
+    }
+
+
+    private void toggleMenu() {
+        if (!isMenuOpen) {
+            drawerLayout.openDrawer(Gravity.LEFT);
+        }
     }
 
     public GoogleSignInManager getGoogleSignInManager() {

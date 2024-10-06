@@ -60,7 +60,6 @@ public class EditTaskActivity extends AppCompatActivity {
         UserTask updatedTask = new UserTask(newTitle, newDescription);
         updatedTask.setId(taskId);
 
-        // Atualiza a tarefa no banco de dados local fica na com.emxemplo.tasklist
         new Thread(() -> {
             userTaskDao.update(updatedTask);
             runOnUiThread(() -> {
