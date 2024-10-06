@@ -125,11 +125,14 @@ public class MainActivity extends AppCompatActivity {
             isUserAuthenticated = false;
             return;
         }
+
         Log.d("UID de usuário", user.getUid());
         Log.d("MainActivity", "Usuário autenticado: " + user.getUid());
         isUserAuthenticated = true;
 
         FirebaseFirestore dbFirestore = FirebaseFirestore.getInstance();
+
+        // Carregar tarefas locais e sincronizar apenas se o usuário estiver autenticado
         AppDatabase.getInstance(this).userTaskDao().getAllTasks().observe(this, localTasks -> {
             if (localTasks != null && !localTasks.isEmpty() && isUserAuthenticated) { // Verifique a autenticação
                 Handler handler = new Handler(Looper.getMainLooper());
@@ -144,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
                                 .get()
                                 .addOnSuccessListener(documentSnapshot -> {
                                     if (!documentSnapshot.exists()) {
+                                        // Adicionar tarefa ao Firestore se não existir
                                         dbFirestore.collection("tasks").document(user.getUid())
                                                 .collection("user_tasks").document(taskIdAsString)
                                                 .set(localTask)
@@ -163,7 +167,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
 
     private void updateUI(FirebaseUser user) {
         if (user != null) {
